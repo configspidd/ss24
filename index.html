@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+<meta charset=utf-8 />
+</head>
+
+<body>
+<canvas id="MeinCanvas" width="600" height="400"></canvas>
+
+
+<script>
+var canvas = document.getElementById('MeinCanvas');
+var context = canvas.getContext('2d');
+var ballX = canvas.width / 2;
+var ballY = canvas.height / 2;
+var ballDX = 5;
+var ballDY = 5;
+var ballRadius = 8;
+var paddleWidth = 20;
+var paddleHeight = 80;
+var playerPaddleY = (canvas.height - paddleHeight) / 2;
+var aiPaddleY = (canvas.height - paddleHeight) / 2;
+var playerPaddleX = canvas.width - paddleWidth - 10;
+var aiPaddleX = 10;
+var lastDeviceBeta = 0;
+var playerScore = 0; 
+var aiScore = 0; 
+var gameInterval; 
+
+
+function drawBall() {
+    context.fillStyle = '#d3d3d3';
+    context.beginPath();
+    context.arc(ballX, ballY, ballRadius, 0, Math.PI * 2);
+    context.closePath();
+    context.fill();
+}
+
+function drawPaddles() {
+    context.fillStyle = '#d3d3d3';
+    context.fillRect(playerPaddleX, playerPaddleY, paddleWidth, paddleHeight);
+    context.fillRect(aiPaddleX, aiPaddleY, paddleWidth, paddleHeight);
+}
+
+function drawCenterLine() {
+    const lineX = canvas.width / 2; 
+    context.beginPath();
+    context.setLineDash([12, 15]); // Sets the dash pattern: 5 pixels solid, 15 pixels space
+    context.moveTo(lineX, 0);
+    context.lineTo(lineX, canvas.height);
+    context.strokeStyle = '#d3d3d3'; 
+    context.lineWidth = 5;
+    context.stroke();
+}
+
+function drawScores() {
+  console.log("Drawing scores:", playerScore, aiScore);  
+    context.font = '36px Arial'; 
+    context.fillStyle = '#d3d3d3'; 
+
+    context.textAlign = 'right'; 
+    context.fillText(playerScore, canvas.width - 250, 50); 
+
+    context.textAlign = 'left'; 
+    context.fillText(aiScore, 250, 50); 
+}
+
+function resetBall() {
+    ballX = canvas.width / 2;
+    ballY = canvas.height / 2;
+    ballDX = -ballDX;
+    ballDY = 3;
+}
+
+function restartGame() {
+    setTimeout(function() {
+        playerScore = 0;
+        aiScore = 0;
+        ballDX = 5;  // Reset speeds to their original values
+        ballDY = 5;
+        resetBall();
+        gameInterval = setInterval(updateGame, 16);
+    }, 3000); // 3-second delay before the game restarts
+}
+
+
+function updateGame() {
+    ballX += ballDX;
+    ballY += ballDY;
+
+    if (ballY + ballDY > canvas.height - ballRadius || ballY + ballDY < ballRadius) {
+        ballDY = -ballDY;
+    }
+
+    if (ballX + ballDX < ballRadius + paddleWidth && ballY > aiPaddleY && ballY < aiPaddleY + paddleHeight) {
+        ballDX = -ballDX;
+    } else if (ballX + ballDX > canvas.width - ballRadius - paddleWidth && ballY > playerPaddleY && ballY < playerPaddleY + paddleHeight) {
+        ballDX = -ballDX;
+    }
+
+    if (ballX < -ballRadius) { 
+      playerScore++;
+      if (playerScore === 10) {
+        alert("PLAYER WINS!");
+        clearInterval(gameInterval);
+        restartGame();
+      } else {
+        resetBall();
+      }
+    }
+
+    if (ballX > canvas.width + ballRadius) { 
+      aiScore++;
+      if (aiScore === 10) {
+          alert("AI WINS!");
+          clearInterval(gameInterval);
+          restartGame();
+      } else {
+          resetBall();
+      }
+  }
+
+    aiPaddleY = ballY - paddleHeight / 2;
+    aiPaddleY = Math.max(0, Math.min(aiPaddleY, canvas.height - paddleHeight));
+
+    draw();
+
+    }
+
+
+function draw() {
+    context.fillStyle = "#000000"; 
+    context.fillRect(0, 0, canvas.width, canvas.height);
+    drawBall();
+    drawPaddles();
+    drawCenterLine();
+    drawScores();
+}
+
+window.addEventListener('deviceorientation', function(event) {
+    var beta = event.beta; // 0 degree is flat, 90 is vertical
+    if (beta > 10 && beta < 90) {
+        playerPaddleY = (canvas.height - paddleHeight) * ((beta - 10) / 80);
+        playerPaddleY = Math.max(0, Math.min(playerPaddleY, canvas.height - paddleHeight));
+    }
+    draw();
+});
+
+// Initialize Game
+function initGame() {
+    setInterval(updateGame, 16); // About 60fps
+}
+
+initGame();
+
+</script>
+</body>
+
+</html>
